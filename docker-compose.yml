@@ -1,0 +1,44 @@
+version: "3.8"
+volumes:
+  my-database:
+    name: my-database
+networks:
+  qrestaurant-network:
+    name: qrestaurant-network
+    driver: bridge
+services:
+  mysql:
+    image: mysql:latest
+    container_name: mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+    ports:
+      - "3306:3306"
+    volumes:
+      - "my-database:/var/lib/mysql"
+    networks:
+      - qrestaurant-network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://mysql:3306" ]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+  qrestaurant:
+    image: qrestaurant:latest
+    container_name: qrestaurant
+    depends_on:
+      - mysql
+    ports:
+      - "8080:8080"
+    networks:
+      - qrestaurant-network
+    build:
+      context: .
+      dockerfile: Dockerfile
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
